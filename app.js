@@ -7,14 +7,13 @@ const mongoose = require('mongoose');
 const url = "mongodb://localhost:27017/conFusion";
 var session =  require('express-session');
 var FileStore = require('session-file-store')(session);
-
+let passport = require('passport');
+let authenticate = require('./authencticate')
 
 var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
 var dishRouter = require('./routes/dishRoutes');
 var userRouter = require('./routes/userRouter');
 var uploadRouter = require('./routes/uploadRouter');
-const e = require('express');
 
 const connect = mongoose.connect(url);
 
@@ -33,43 +32,38 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser('apapun'));
+app.use(cookieParser('session-id'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
   name: 'session-id',
-  secret: 'secret-key',
-  saveUninitialized: true,
-  resave: true,
-  store: new FileStore(),
-  cookie: {secure: false}
+  secret: '12345-67890-09876-54321',
+  saveUninitialized: false,
+  resave: false,
+  store: new FileStore()
 }));
 
-function auth (req, res, next) {
-  console.log(req.headers);
-  if (!req.session.user) {
-    let err = new Error("You're not authenticated!");
-    err.status = 401;
-    next(err);
-  } 
-  else {
-    if (req.session.user && req.session.username) {
-      //find di DB
-      console.log('req. session: '+req.session);
-      next();
-    } else {
-      let err = new Error("You're not authenticated!");
-      err.status = 401;
-      next(err);
-    }
-  }
-}
-app.use('/user', userRouter);
-
-// app.use(auth);
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/user', userRouter);
+
+function auth (req, res, next) {
+  console.log(req.user)
+
+  if (!req.user) {
+    let err = new Error("you're not authenticated!");
+    err.status=403;
+    next(err);
+  } else {
+    next();
+  }
+
+}
+
+app.use(auth);
+
 app.use('/dish', dishRouter);
 app.use('/upload', uploadRouter);
 
