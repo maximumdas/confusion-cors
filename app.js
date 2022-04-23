@@ -4,7 +4,9 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const mongoose = require('mongoose');
-const url = "mongodb://localhost:27017/conFusion";
+const config = require('./config');
+
+const url = config.mongoUrl;
 var session =  require('express-session');
 var FileStore = require('session-file-store')(session);
 let passport = require('passport');
@@ -48,21 +50,6 @@ app.use(passport.session());
 
 app.use('/', indexRouter);
 app.use('/user', userRouter);
-
-function auth (req, res, next) {
-  console.log(req.user)
-
-  if (!req.user) {
-    let err = new Error("you're not authenticated!");
-    err.status=403;
-    next(err);
-  } else {
-    next();
-  }
-
-}
-
-app.use(auth);
 
 app.use('/dish', dishRouter);
 app.use('/upload', uploadRouter);

@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const { router } = require('../app');
 const passport = require('passport');
-
+const authencticate = require('./../authencticate');
 const cors = require('./cors');
 
 const userRouter = express.Router();
@@ -28,9 +28,19 @@ userRouter.post('/signup', (req, res, next) => {
 })
 
 userRouter.post('/login', passport.authenticate('local'), (req, res, next) => {
+    let token = authencticate.getToken({_id: req.user._id});
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
-    res.json({success: true, status: "You're successfully logged in!"});
+    res.json({success: true, token: token, status: "You're successfully logged in!"});
+})
+
+userRouter.post('/facebook/token', passport.authenticate('facebook-token'), (req, res) => {
+    if (req.user) {
+        let token = authencticate.getToken({_id: req.user._id});
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json({success: true, token: token, status: "You're successfully logged in!"});
+    }
 })
 
 userRouter.get('/logout', (req, res) => {
